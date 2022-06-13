@@ -1,0 +1,36 @@
+Exclusion List
+Case Notes
+Updated Demographics
+Dental Pain
+Demographics Long Variables
+QOLI
+SRH-SRMH
+EQ 5D
+OQ-10
+Client Satisfaction
+MAOI Activity
+GAIN-SDS
+MCAS
+CSI
+MOS
+FCSS - YEWB
+K10
+Youth Acuity Scale
+FSSQ
+Clinical Frailty Scale
+Access Open Minds
+ASQ
+ARC
+Rapid Testing
+Contact Merged
+CUAD
+PSAS
+Adult Acuity Scale
+GAIN
+PFS
+KIDI
+Food Ins
+GAD-7
+FCSS - VOL
+Vision Pretest
+Optometrist Interventions

@@ -1,0 +1,13 @@
+This project uses a combination of Python and R. The Pandas library cleans up the activity data while excluding from an exlusion list.
+R is used to auto generate graphs based on this data. There are multiple graphs per program.
+
+This data uses inferential categorization when consider what program a staff memeber works for. The script assigns a program type to a staff member based on how many clients they interacted that belong to a program.
+If a staff member has a very low amount of submitted activities or they interact with clients across many programs, the inference may be incorrect.
+But this inference method allows comparison with today's data with historical data.
+
+What you need:
+
+1. Download activities from the data range you need form Civi using the bulk activities report, specifically "Activities - Merrill" report. Call this file "data.csv"
+2. Check the exclusionList.txt file to see what activities are excluded. Add onto the list to exclude any activities from the report.
+3. Open up the R file "GeneralActivityPrep_r_script.Rmd" in R studio.
+4. Run the script, and it will generate multipel graphs per program while exlcuding everything from the list.

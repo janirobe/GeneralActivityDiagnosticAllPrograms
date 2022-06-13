@@ -1,0 +1,180 @@
+---
+title: "General Civi Activity Across All Programs"
+author: "by Robert Janikowski"
+output: pdf_document
+fig_crop: no
+date: '2022-6-13'
+geometry: "left=1cm,right=1cm,top=1cm,bottom=1cm"
+classoption: landscape, a4paper
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if (!require("reticulate")) {
+install.packages("reticulate")
+library(reticulate)
+}
+if (!require("ggplot2")) {
+install.packages("ggplot2")
+library(ggplot2)
+}
+if (!require("tidyverse")) {
+install.packages("tidyverse")
+library(tidyverse)
+}
+if (!require("RColorBrewer")) {
+install.packages("RColorBrewer")
+library(RColorBrewer)
+}
+if (!require("ggpubr")) {
+install.packages("ggpubr")
+library(ggpubr)
+}
+if (!require("grid")) {
+install.packages("grid")
+library(grid)
+}
+if (!require("extrafont")) {
+install.packages("extrafont")
+library(extrafont)
+}
+if (!require("scales")) {
+install.packages("scales")
+library(scales)
+}
+if (!require("knitr")) {
+install.packages("knitr")
+library(knitr)
+}
+
+#font_import(pattern = 'RUBIK')
+#font_import(path = "C:/Users/rjanikowski/AppData/Local/Microsoft/Windows/Fonts", pattern = ".TTF")
+
+#py_install("pandas")
+#tinytex::install_tinytex()
+source_python('GeneralActivityPrep_python_script.py')
+#py_run_file('GeneralActivityPrep_python_script.py')
+```
+
+
+```{r eval = FALSE, echo = FALSE}
+#tables showing breakdown of included and excluded activity lists
+
+kable(pivot2)
+kable(pivot3)
+```
+
+
+```{r eval = FALSE, echo = FALSE}
+#test graph (singular and does not print)
+groupdf = df
+groupdf = filter(groupdf, Staff_ClinicType == "Youth Health Centre")
+colourCount = length(unique(groupdf$Contact_Name))
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
+
+stackdf = groupdf %>% count(Contact_Name,Activity_Type)
+totaldf = groupdf %>% count(Activity_Type)
+names(totaldf)[2] = 't'
+totaldf = totaldf %>% arrange(desc(t))
+stackdf = merge(stackdf,totaldf)
+
+if (nrow(totaldf) >= 75) {
+  totaldf = totaldf %>% add_column(Top = NA)
+  totaldf[1:floor(nrow(totaldf)/2),"Top"] = "yes"
+  stackdf = merge(stackdf,totaldf)
+  
+  topdf =  stackdf %>% filter(!Top %in% c('yes'))
+  
+  (ggplot(topdf, aes(x=reorder(Activity_Type,t), y=n, fill=Contact_Name)) + 
+    geom_bar(position="stack", stat="identity") + scale_fill_manual(values=getPalette(colourCount)) + theme(legend.position = "bottom",legend.text=ggplot2::element_text(size=8),legend.title=element_blank(),legend.key.size = unit(1.5,"line")) + guides(colour = guide_legend(title.position = "bottom")) + ggtitle(clinicType) + labs(y= "Activity Count by Staff Member", x = "Date(month)", subtitle = "Civi Activity By Staff Member (stacked) Part 1") + theme(plot.title = element_text(size = 25, face = "bold", hjust=0.5)) + theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")) + theme(plot.margin = margin(t=-1, r=-1, b=-1, l=-1))) + coord_flip() %>% print()
+  
+  Sys.sleep(1)
+  
+  bottomdf =  stackdf %>% filter(Top %in% c('yes'))
+  
+  (ggplot(bottomdf, aes(x=reorder(Activity_Type,t), y=n, fill=Contact_Name)) + 
+    geom_bar(position="stack", stat="identity") + scale_fill_manual(values=getPalette(colourCount)) + theme(legend.position = "bottom",legend.text=ggplot2::element_text(size=8),legend.title=element_blank(),legend.key.size = unit(1.5,"line")) + guides(colour = guide_legend(title.position = "bottom")) + ggtitle(clinicType) + labs(y= "Activity Count by Staff Member", x = "Date(month)", subtitle = "Civi Activity By Staff Member (stacked) Part 2") + theme(plot.title = element_text(size = 25, face = "bold", hjust=0.5)) + theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")) + theme(plot.margin = margin(t=-1, r=-1, b=-1, l=-1))) + coord_flip() %>% print()
+} else {
+  
+   (ggplot(stackdf, aes(x=reorder(Activity_Type,t), y=n, fill=Contact_Name)) + 
+    geom_bar(position="stack", stat="identity") + scale_fill_manual(values=getPalette(colourCount)) + theme(legend.position = "bottom",legend.text=ggplot2::element_text(size=8),legend.title=element_blank(),legend.key.size = unit(1.5,"line")) + guides(colour = guide_legend(title.position = "bottom")) + ggtitle(clinicType) + labs(y= "Activity Count by Staff Member", x = "Date(month)", subtitle = "Civi Activity By Staff Member (stacked) Part 1") + theme(plot.title = element_text(size = 25, face = "bold", hjust=0.5)) + theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")) + theme(plot.margin = margin(t=-1, r=-1, b=-1, l=-1))) + coord_flip() %>% print()
+  
+}
+```
+
+
+
+```{r, echo = FALSE, fig.align = "center", fig.height = 10, fig.width = 14, out.width = "8.5in"}
+## this loop iterates through each clinicType and prints different graphs based on activity data from the clinicType
+
+
+#staffClinicList = staffClinicList[0:3]
+
+for (clinicType in staffClinicList)
+{
+  groupdf = df [!duplicated(df[c("Contact_Name","StaffDate")]),]
+  groupdf = filter(groupdf, Staff_ClinicType == clinicType)
+  
+  colourCount = length(unique(groupdf$Contact_Name))
+  getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+  
+  (ggplot(filter(df, Staff_ClinicType == clinicType)) +aes(x = lubridate::floor_date(Date, "month")) + geom_bar() +ggtitle(clinicType) +labs(y= "Overall Activity Count", x = "Date(month)", subtitle = "Overall Activity Count") + theme(plot.title = element_text(size = 25, face = "bold", hjust=0.5)) + theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black"))) %>% print()
+  Sys.sleep(1)
+  
+  (ggplot(groupdf, aes(x =StaffDate, y=staff_activity_count, group = groupdf$Contact_Name, colour = groupdf$Contact_Name)) + geom_line(size=1) + geom_point( size=2, shape=21, fill="white") + scale_colour_manual(values=getPalette(colourCount)) +theme(legend.position = "bottom",legend.text=ggplot2::element_text(size=8),legend.title=element_blank()) + guides(colour = guide_legend(title.position = "bottom"),legend.key.size = unit(2,"line")) + ggtitle(clinicType) + labs(y= "Activity Count by Staff Member", x = "Date(month)", subtitle = "Civi Activity By Staff Member (line)") + expand_limits(x = unique(df$StaffDate)) + theme(plot.title = element_text(size = 25, face = "bold",hjust = 0.5)) + theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")))  %>% print()
+  
+  Sys.sleep(1)
+  
+  (ggplot(groupdf, aes(fill=Contact_Name, y=staff_activity_count, x=StaffDate)) + 
+    geom_bar(position="stack", stat="identity") + scale_fill_manual(values=getPalette(colourCount)) + theme(legend.position = "bottom",legend.text=ggplot2::element_text(size=8),legend.title=element_blank(),legend.key.size = unit(2,"line")) + guides(colour = guide_legend(title.position = "bottom")) + ggtitle(clinicType) + labs(y= "Activity Count by Staff Member", x = "Date(month)", subtitle = "Civi Activity By Staff Member (stacked)") + expand_limits(x = unique(df$StaffDate)) + theme(plot.title = element_text(size = 25, face = "bold", hjust=0.5)) + theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")))  %>% print()
+  
+  Sys.sleep(1)
+
+  
+### stacked side graph
+groupdf = df
+groupdf = filter(groupdf, Staff_ClinicType == clinicType)
+colourCount = length(unique(groupdf$Contact_Name))
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
+stackdf = groupdf %>% count(Contact_Name,Activity_Type)
+totaldf = groupdf %>% count(Activity_Type)
+names(totaldf)[2] = 't'
+totaldf = totaldf %>% arrange(desc(t))
+stackdf = merge(stackdf,totaldf)
+
+## if there are more than 75 unique activities, activities are split into two different graphs
+if (nrow(totaldf) >= 75) {
+  totaldf = totaldf %>% add_column(Top = NA)
+  totaldf[1:floor(nrow(totaldf)/2),"Top"] = "yes"
+  stackdf = merge(stackdf,totaldf)
+  
+  topdf =  stackdf %>% filter(!Top %in% c('yes'))
+  
+  (ggplot(topdf, aes(x=reorder(Activity_Type,t), y=n, fill=Contact_Name)) + 
+    geom_bar(position="stack", stat="identity") + scale_fill_manual(values=getPalette(colourCount)) + theme(legend.position = "bottom",legend.text=ggplot2::element_text(size=8),legend.title=element_blank(),legend.key.size = unit(1.5,"line")) + guides(colour = guide_legend(title.position = "bottom")) + ggtitle(clinicType) + labs(y= "Activity Count by Staff Member", x = "Date(month)", subtitle = "Civi Activity By Staff Member (stacked) Part 1") + theme(plot.title = element_text(size = 25, face = "bold", hjust=0.5)) + theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")) + theme(plot.margin = margin(t=-1, r=-1, b=-1, l=-1)) + coord_flip()) %>% print()
+  
+  Sys.sleep(1)
+  
+  bottomdf =  stackdf %>% filter(Top %in% c('yes'))
+  
+  (ggplot(bottomdf, aes(x=reorder(Activity_Type,t), y=n, fill=Contact_Name)) + 
+    geom_bar(position="stack", stat="identity") + scale_fill_manual(values=getPalette(colourCount)) + theme(legend.position = "bottom",legend.text=ggplot2::element_text(size=8),legend.title=element_blank(),legend.key.size = unit(1.5,"line")) + guides(colour = guide_legend(title.position = "bottom")) + ggtitle(clinicType) + labs(y= "Activity Count by Staff Member", x = "Date(month)", subtitle = "Civi Activity By Staff Member (stacked) Part 2") + theme(plot.title = element_text(size = 25, face = "bold", hjust=0.5)) + theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")) + theme(plot.margin = margin(t=-1, r=-1, b=-1, l=-1)) + coord_flip() )%>% print()
+  
+  Sys.sleep(1)
+} else {
+  
+   (ggplot(stackdf, aes(x=reorder(Activity_Type,t), y=n, fill=Contact_Name)) + 
+    geom_bar(position="stack", stat="identity") + scale_fill_manual(values=getPalette(colourCount)) + theme(legend.position = "bottom",legend.text=ggplot2::element_text(size=8),legend.title=element_blank(),legend.key.size = unit(1.5,"line")) + guides(colour = guide_legend(title.position = "bottom")) + ggtitle(clinicType) + labs(y= "Activity Count by Staff Member", x = "Date(month)", subtitle = "Civi Activity By Staff Member (stacked) Part 1") + theme(plot.title = element_text(size = 25, face = "bold", hjust=0.5)) + theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")) + theme(plot.margin = margin(t=-1, r=-1, b=-1, l=-1)) + coord_flip()) %>% print()
+  
+  Sys.sleep(1)
+  
+}
+  
+}
+```
+
+
+
+
