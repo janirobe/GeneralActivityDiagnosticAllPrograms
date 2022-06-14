@@ -2,6 +2,8 @@
 title: "General Civi Activity Across All Programs"
 author: "by Robert Janikowski"
 output: pdf_document
+header-includes:
+  - \usepackage{booktabs}
 fig_crop: no
 date: '2022-6-13'
 geometry: "left=1cm,right=1cm,top=1cm,bottom=1cm"
@@ -46,6 +48,14 @@ if (!require("knitr")) {
 install.packages("knitr")
 library(knitr)
 }
+if (!require("data.table")) {
+  install.packages("data.table")
+  library(data.table)
+}
+if (!require("kableExtra")) {
+  install.packages("kableExtra")
+  library(kableExtra)
+}
 
 #font_import(pattern = 'RUBIK')
 #font_import(path = "C:/Users/rjanikowski/AppData/Local/Microsoft/Windows/Fonts", pattern = ".TTF")
@@ -55,7 +65,7 @@ library(knitr)
 source_python('GeneralActivityPrep_python_script.py')
 #py_run_file('GeneralActivityPrep_python_script.py')
 ```
-
+\newpage
 
 ```{r eval = FALSE, echo = FALSE}
 #tables showing breakdown of included and excluded activity lists
@@ -102,17 +112,108 @@ if (nrow(totaldf) >= 75) {
   
 }
 ```
+```{r eval = FALSE, echo = FALSE, results='asis', warning = F}
+df_freqTable = filter(df, Staff_ClinicType == "Youth Health Centre")
+freqTable = sort(table(df_freqTable$Activity_Type), decreasing = TRUE)
+#kable(freqTable, col.names = c(paste(clinicType, " Activities"), "Frequency"))
+
+freqTable = as.data.frame(freqTable)
+
+numCount = count(freqTable)
+modCount = numCount %% 45
+divisor = as.integer((numCount - modCount)/45)
+
+if (divisor > 3) {
+  divisor = 3
+}
+
+kableList = c()
+minRange = 1
+maxRange = 45
+
+for (i in 1:divisor) {
+  kable = kable(freqTable[minRange:maxRange,], format = 'latex', col.names = c(paste("Youth Health Centre", " Activities", i), "Frequency"))
+  kableList = append(kableList, kable)
+  
+  minRange = minRange + 45
+  maxRange = maxRange +45
+  
+}
+
+catVector = c("\\begin{table}[h] \\centering ")
+
+for (table in kableList) {
+  catVector = append(catVector, table)
+  catVector = append(catVector, "\\hspace{1cm} \\centering ")
+}
+
+catVector = append(catVector, "\\caption{My tables} \\end{table}")
+
+cat(catVector)
 
 
+#have to consruct cat with for loop
 
-```{r, echo = FALSE, fig.align = "center", fig.height = 10, fig.width = 14, out.width = "8.5in"}
+
+#knitr::kable(list(freqTable[1:45,], freqTable[46:90,]), col.names = c(paste("Youth Health Centre", " Activities"), "Frequency"), booktabs = TRUE)
+
+#(knitr::kable(freqTable, col.names = c(paste(clinicType, " Activities"), "Frequency"))) %>% print
+
+```
+
+
+```{r eval = TRUE, echo = FALSE, fig.align = "center", fig.height = 10, fig.width = 14, out.width = "8.5in", results='asis'}
 ## this loop iterates through each clinicType and prints different graphs based on activity data from the clinicType
 
 
-#staffClinicList = staffClinicList[0:3]
+#staffClinicList = staffClinicList[0:1]
 
 for (clinicType in staffClinicList)
 {
+  df_freqTable = filter(df, Staff_ClinicType == clinicType)
+  freqTable = sort(table(df_freqTable$Activity_Type), decreasing = TRUE)
+  
+  freqTable = as.data.frame(freqTable)
+  
+  numCount = count(freqTable)
+  modCount = numCount %% 40
+  divisor = as.integer((numCount - modCount)/40)
+  
+  if (divisor > 3) {
+    divisor = 3
+  }
+  
+  kableList = c()
+  minRange = 1
+  maxRange = 40
+  
+  for (i in 1:divisor) {
+    #kable = kable(freqTable[minRange:maxRange,], format = 'latex', col.names = c(paste(clinicType, " Activities", i), "Frequency"))
+    #kable = kable(freqTable[minRange:maxRange,], col.names = c(paste(clinicType, " Activities", i), "Frequency"))
+    kable = freqTable[minRange:maxRange,]
+    kableList = append(kableList, kable)
+    
+    minRange = minRange + 40
+    maxRange = maxRange +40
+    
+  }
+  
+  #catVector = c("\\begin{table}[h] \\centering ")
+  
+  #for (table in kableList) {
+  #  catVector = append(catVector, table)
+  #  catVector = append(catVector, "\\hspace{1cm} \\centering ")
+  #}
+  
+  #catVector = append(catVector, "\\caption{My tables} \\end{table}")
+  
+  cat(kable(kableList, caption = paste(clinicType, "Activity Frequencies"), booktabs = TRUE, format = "latex", valign = 't', col.names = NULL) %>% kable_styling(latex_options = "HOLD_position"))
+  cat("\n")
+  
+  
+  Sys.sleep(1)
+  
+  #beginning of graphs
   groupdf = df [!duplicated(df[c("Contact_Name","StaffDate")]),]
   groupdf = filter(groupdf, Staff_ClinicType == clinicType)
   
